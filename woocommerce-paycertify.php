@@ -1,4 +1,7 @@
 <?php
+
+require_once(dirname(__FILE__) . "/vendor/autoload.php");
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }		
@@ -33,7 +36,7 @@ class WC_Paycertify {
 		
 		add_action( 'plugins_loaded', array( $this, 'init' ), 0 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'paycertify_assets' ) );
-		
+
 	}
 	
 	
@@ -61,15 +64,20 @@ class WC_Paycertify {
 		// Includes
 		include_once( 'include/class-woocommerce-paycertify-gateway.php' );
 		include_once( 'include/class-woocommerce-paycertify-api.php' );
+		include_once( 'include/class-woocommerce-paycertify-three-ds.php' );
+		include_once( 'include/class-woocommerce-paycertify-three-ds-callback.php' );
 		
 		if ( class_exists( 'WC_Subscriptions_Order' ) || class_exists( 'WC_Pre_Orders_Order' ) )
 			include_once( 'include/class-woocommerce-paycertify-subscription.php' );
+
 		
+		// Call configure 3DS method
+		$this->configure_three_ds();
 		
 		// Add Paycertify Gateway
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'add_paycertify_gateway' ) );
 	}
-	
+
 	/**
 	 *  Add paycertify_gateway to exitsting woocommerce gateway 
 	 */
@@ -93,7 +101,20 @@ class WC_Paycertify {
 		echo '<div class="error"><p>' . sprintf( __( 'WooCommerce PayCertify Gateway depends on the last version of %s to work!', 'wcPG' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>' ) . '</p></div>';
 		
 	}
-	
+
+	/**
+	 * Configure 3DS
+	 */
+	private function configure_three_ds() {
+		$gateway = new WC_Paycertify_Gateway();
+
+		if( $gateway->is_three_ds_enabled() ) {
+			PayCertify\ThreeDS::$api_key    = $gateway->get_option('3ds_api_key');
+			PayCertify\ThreeDS::$api_secret = $gateway->get_option('3ds_api_secret');
+			PayCertify\ThreeDS::$mode       = 'live'; // Can be live or test
+		}
+	}
+
 }
 new WC_Paycertify();  
 
@@ -126,3 +147,21 @@ if( !function_exists('writeLog') ) {
 		fclose($f);
 	}
 }
+
+if( !function_exists('pc_overridePageTemplate') ) {
+	add_filter( 'page_template', 'pc_overridePageTemplate' );
+
+	function pc_overridePageTemplate( $page_template )
+	{
+	    if ( is_page( '3ds-callback' ) ) {
+	        $page_template = dirname( __FILE__ ) . '/actions/3ds_callback.php';
+	    }
+	    return $page_template;
+	}
+}
+
+function register_session(){
+    if( !session_id() )
+        session_start();
+}
+add_action('init','register_session');

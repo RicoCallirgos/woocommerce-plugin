@@ -125,6 +125,33 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
 				'desc_tip'    => true				
 				
 			),
+			'enable_3ds' => array(
+				'title' 	  => __( '3DS', 'paycertify' ),
+				'type'        => 'checkbox',
+				'label'       => __( 'Enable 3DS ', 'paycertify' ),
+				'description' => __( 'Enable it if you want to use 3DS.', 'paycertify' ),
+				'default'     => 'no',
+				'desc_tip'    => true				
+				
+			),
+			'3ds_api_key' => array(
+				'title' 	  => __( '3DS API Key', 'paycertify' ),
+				'type'        => 'text',
+				'label'       => __( 'Enable 3DS ', 'paycertify' ),
+				'description' => __( 'Add your 3DS API Key here.', 'paycertify' ),
+				'default'     => '',
+				'desc_tip'    => true				
+				
+			),
+			'3ds_api_secret' => array(
+				'title' 	  => __( '3DS API Secret', 'paycertify' ),
+				'type'        => 'text',
+				'label'       => __( 'Enable 3DS ', 'paycertify' ),
+				'description' => __( 'Add your 3DS API Secret here.', 'paycertify' ),
+				'default'     => '',
+				'desc_tip'    => true				
+				
+			),
 		);
 			
 	}
@@ -156,7 +183,7 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
 	}
 	
 	public function admin_options(){
-		echo '<h3>'.__('Paycertify Payment Gateway', 'paycertify').'</h3>';
+		echo '<h3>'.__('Paycertify Payment Gateway Settings', 'paycertify').'</h3>';
 		echo '<p>'.__('Paycertify Payment Gateway').'</p>';
 		echo '<table class="form-table">';
 		// Generate the HTML For the settings form.
@@ -210,13 +237,35 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
 			return;
 		}
 		$order = wc_get_order( $order_id );
+
+		// FAZER O 3DS
+
+		$_SESSION['payment'] = $_POST;
+		$threeDS = new WC_Paycertify_ThreeDS($_POST, $order);
+		$threeDS->start($order_id);
+	}
+
+	/**
+	 * Finish the order
+	 */
+	public function finishPayment( $threeDS, $threeDSResult ) {
+		global $woocommerce;
+		// $_SESSION['3ds'] = null;
+
+		require_once plugin_dir_path( __FILE__ ) . 'class-woocommerce-paycertify-api.php';	
 		
+		if ( $woocommerce->cart->get_cart_contents_count() == 0 ) {
+			wc_add_notice( __('Cart Error : ', 'paycertify') . '<strong>Cart</strong> is empty.', 'error' );
+			return;
+		}
+		$order = wc_get_order( $threeDS['order_id'] );
+
 		$Paycertify_Process = new Paycertify_API( $order,  $this->settings );
-		$Ret = $Paycertify_Process->do_transaction();
-		
+		$Ret = $Paycertify_Process->do_transaction( $_SESSION['payment'],  $threeDSResult );
+
 		// PNRef number
 		$PNRef =  $Ret['data']['PNRef'] ? $Ret['data']['PNRef'] : '';
-		update_post_meta( $order_id, 'PNRef', $PNRef  );
+		update_post_meta( $threeDS['order_id'], 'PNRef', $PNRef  );
 		
 		if( isset( $Ret['success'] ) && $Ret['success'] == 1 ) {
 			$order->payment_complete();
@@ -247,7 +296,6 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
 			wc_add_notice( __('Payment Error : ', 'paycertify') . $error , 'error' );
 			return;
 		}
-			
 	}
 	
 	/**
@@ -278,6 +326,10 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
 			return new WP_Error( 'refund_error', __('Payment Refund error: ', 'paycertify' ) . $error );
 		}
 
+	}
+
+	public function is_three_ds_enabled(){
+		return ($this->get_option('enable_3ds') == 'yes' && strlen($this->get_option('3ds_api_key')) > 0 && strlen($this->get_option('3ds_api_secret')) > 0);
 	}
 	
 

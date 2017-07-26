@@ -39,7 +39,7 @@ class Paycertify_API {
 	 * @param 	void
 	 * @return  array
 	 */
-	private function prepare_req() {
+	private function prepare_req( $formParams, $threeDSData = null ) {
 		$params = array();
 		$action = 'ProcessCreditCard';
 		 
@@ -86,10 +86,10 @@ class Paycertify_API {
 			if(isset($this->settings['paycertify_trans']) && $this->settings['paycertify_trans'] == 'yes')
 				$params['paycertifyTransaction'] = 1;	
 			
-			$cardholder_name = $_POST['cardholder_name'];
-			$cardnum 		 = $_POST['cardnum'];
-			$exp_date 		 = $_POST['exp_date'];
-			$cvv			 = $_POST['cvv'];
+			$cardholder_name = $formParams['cardholder_name'];
+			$cardnum 		 = $formParams['cardnum'];
+			$exp_date 		 = $formParams['exp_date'];
+			$cvv			 = $formParams['cvv'];
 			
 			if( isset( $cardholder_name ) && $cardholder_name != '' )
 				$params['NameOnCard'] = trim( $cardholder_name );
@@ -149,8 +149,24 @@ class Paycertify_API {
 		}
 		
 		$params['action'] = $action;
-		
+		// 3DS Secure
+		$params['3dsecure'] = 1;
+		$params['tdsecurestatus'] = $this->load3DSParams($threeDSData);
+
 		return $params;	
+	}
+
+	private function load3DSParams($data) {
+		$tdsParams = ['cavv_algorithm' => '2', 'status' => 'Y'];
+		$mapper = ['xid', 'eci', 'cavv'];
+
+		foreach ($mapper as $attribute) {
+          if(isset($data[$attribute])) {
+            $tdsParams[$attribute] = $data[$attribute];
+          }
+        }
+		
+		return json_encode($tdsParams);
 	}
 	
 	/**
@@ -302,23 +318,23 @@ class Paycertify_API {
 	 * @param 	void
 	 * @return  array
 	 */
-	public function do_transaction() {
+	public function do_transaction( $formParams, $threeDSData = null ) {
 		$Ret  = array();
 		$error = array();
 		$data = '';
 		$success = 0;
 		
-		$params 	= $this->prepare_req(); 
+		$params 	= $this->prepare_req( $formParams, $threeDSData ); 
 		$validate 	= $this->validate_req( $params );
-		
+
 		writeLog( 'parameter for process transacion -> '.print_r( $params, true ) );
-		
+	
 		if( count( $validate ) ) {
 			$error = array_merge( $error,$validate );
 		} else {
 			$action = $params['action'];
 			$response = $this->process_transaction( $params );
-			
+
 			if( isset( $action ) &&  $action == 'ProcessStoredCard' ) {
 				if( isset( $response['error']) ) {
 					$error[] = $response['error'];
