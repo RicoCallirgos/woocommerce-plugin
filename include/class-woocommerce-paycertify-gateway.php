@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 * @class 	WC_Paycertify_Gateway
 * @extends  WC_Payment_Gateway
 * @auther 	Percertify
-* @version  0.1.1
+* @version  0.1.2
 */
 
 class WC_Paycertify_Gateway extends WC_Payment_Gateway {
@@ -123,7 +123,6 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
         'description' => __( 'We recommend you use test mode until you are ready to go live.', 'paycertify' ),
         'default'     => 'yes',
         'desc_tip'    => true
-
       ),
       'enable_3ds' => array(
         'title' 	  => __( '3DS', 'paycertify' ),
@@ -132,7 +131,6 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
         'description' => __( 'Enable it if you want to use 3DS.', 'paycertify' ),
         'default'     => 'no',
         'desc_tip'    => true
-
       ),
       '3ds_api_key' => array(
         'title' 	  => __( '3DS API Key', 'paycertify' ),
@@ -141,16 +139,22 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
         'description' => __( 'Add your 3DS API Key here.', 'paycertify' ),
         'default'     => '',
         'desc_tip'    => true
-
       ),
       '3ds_api_secret' => array(
-        'title' 	  => __( '3DS API Secret', 'paycertify' ),
+        'title'     => __( '3DS API Secret', 'paycertify' ),
         'type'        => 'text',
         'label'       => __( 'Enable 3DS ', 'paycertify' ),
         'description' => __( 'Add your 3DS API Secret here.', 'paycertify' ),
         'default'     => '',
         'desc_tip'    => true
-
+      ),
+      '3ds_decline_transactions' => array(
+        'title'     => __( 'Auto Decline Transaction?', 'paycertify' ),
+        'type'        => 'checkbox',
+        'label'       => __( 'Decline transaction if 3D Secure fails.', 'paycertify' ),
+        'description' => __( 'Decline transaction if 3D Secure fails.', 'paycertify' ),
+        'default'     => 'yes',
+        'desc_tip'    => true
       ),
     );
 
@@ -239,33 +243,36 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
     $order = wc_get_order( $order_id );
 
     // FAZER O 3DS
-
-    $_SESSION['payment'] = $_POST;
-    $threeDS = new WC_Paycertify_ThreeDS($_POST, $order);
-    $threeDS->start($order_id);
+    if ($this->is_three_ds_enabled()) {
+        $_SESSION['payment'] = $_POST;
+        $threeDS = new WC_Paycertify_ThreeDS($_POST, $order);
+        return $threeDS->start($order_id);
+    } else {
+      return $this->finishPayment($order_id);
+    }
   }
 
   /**
    * Finish the order
    */
-  public function finishPayment( $threeDS, $threeDSResult ) {
+  public function finishPayment( $order_id, $threeDSResult ) {
     global $woocommerce;
+    $error = '';
     // $_SESSION['3ds'] = null;
 
     require_once plugin_dir_path( __FILE__ ) . 'class-woocommerce-paycertify-api.php';
 
     if ( $woocommerce->cart->get_cart_contents_count() == 0 ) {
-      wc_add_notice( __('Cart Error : ', 'paycertify') . '<strong>Cart</strong> is empty.', 'error' );
-      return;
+      return wc_add_notice( __('Cart Error : ', 'paycertify') . '<strong>Cart</strong> is empty.', 'error' );
     }
-    $order = wc_get_order( $threeDS['order_id'] );
+    $order = wc_get_order( $order_id );
 
     $Paycertify_Process = new Paycertify_API( $order,  $this->settings );
     $Ret = $Paycertify_Process->do_transaction( $_SESSION['payment'],  $threeDSResult );
 
     // PNRef number
     $PNRef =  $Ret['data']['PNRef'] ? $Ret['data']['PNRef'] : '';
-    update_post_meta( $threeDS['order_id'], 'PNRef', $PNRef  );
+    update_post_meta( $order_id, 'PNRef', $PNRef  );
 
     if( isset( $Ret['success'] ) && $Ret['success'] == 1 ) {
       $order->payment_complete();
@@ -280,7 +287,6 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
       );
     }
     else {
-      $error = '';
       $i = 1;
       foreach($Ret['error'] as $k=>$v) {
         if(count($Ret['error']) == $i )
@@ -291,10 +297,13 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
         $error.= $v.$join;
         $i++;
       }
+
+      // var_dump($error);
+      // die('ERROR');
+
       // Mark as on-hold (we're awaiting the payment)
       $order->update_status( 'on-hold', __( 'Awaiting offline payment', 'paycertify' ) );
-      wc_add_notice( __('Payment Error : ', 'paycertify') . $error , 'error' );
-      return;
+      return wc_add_notice( __('Payment Error : ', 'paycertify') . $error , 'error' );
     }
   }
 

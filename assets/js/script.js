@@ -1,14 +1,3 @@
-jQuery(document.body).on('update_checkout', function(e){
-    //e.preventDefault();
-    //e.stopPropagation();
-    e.stopImmediatePropagation();
-    ALERT('ENTROU AQUI');
-});
-
-jQuery(document).on('ready', function(e){
-    // alert('CARREGOU')
-});
-
 jQuery(document).ajaxComplete(function(event,response,xhr){
 	try {
 	  jQuery.parseJSON( response.responseText );

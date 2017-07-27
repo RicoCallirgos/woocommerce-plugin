@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /*
 * @class 	Paycertify_API
 * @auther 	Percertify
-* @version  0.1.1
+* @version  0.1.2
 */
 class Paycertify_API {
 
@@ -19,6 +19,9 @@ class Paycertify_API {
   // ORDER
   protected $order = '';
 
+  // Gateway
+  protected $gateway;
+
   /**
    * constructor
    *
@@ -28,6 +31,7 @@ class Paycertify_API {
   public function __construct( $order ,$settings = array() ) {
     $this->settings = $settings;
     $this->order = $order;
+    $this->gateway = new WC_Paycertify_Gateway();
 
     if($this->settings['enable_testmode'] == 'no')
       $this->url = 'https://gateway.paycertify.net';
@@ -149,9 +153,12 @@ class Paycertify_API {
     }
 
     $params['action'] = $action;
-    // 3DS Secure
-    $params['3dsecure'] = 1;
-    $params['tdsecurestatus'] = $this->load3DSParams($threeDSData);
+
+    if( $this->gateway->is_three_ds_enabled() && $threeDSData !==  null) {
+      // 3DS Secure
+      $params['3dsecure'] = 1;
+      $params['tdsecurestatus'] = $this->load3DSParams($threeDSData);
+    }
 
     return $params;
   }

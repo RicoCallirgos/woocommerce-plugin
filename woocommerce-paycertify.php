@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
   * Plugin Name: PayCertify Gateway
   * Plugin URI:  https://paycertify.com/
   * Description: Paycertify Payment Gateway Plugin for WooCommerce.
-  * Version: 	 0.1.1
+  * Version: 	 0.1.2
   * Author: 	 PayCertify
   * Author URI:  https://paycertify.com/
   * License: 	 GPLv2
@@ -18,12 +18,15 @@ if ( ! defined( 'ABSPATH' ) ) {
   * Text Domain: paycertify
   *
   * @class       WC_Paycertify
-  * @version     0.1.1
+  * @version     0.1.2
   * @package     WooCommerce/Classes/Payment
   * @author      Paycertify
   */
 
 class WC_Paycertify {
+
+  // Gateway
+  protected $gateway;
 
   /**
    * Constructor
@@ -36,7 +39,6 @@ class WC_Paycertify {
 
     add_action( 'plugins_loaded', array( $this, 'init' ), 0 );
     add_action( 'wp_enqueue_scripts', array( $this, 'paycertify_assets' ) );
-
   }
 
 
@@ -70,6 +72,8 @@ class WC_Paycertify {
     if ( class_exists( 'WC_Subscriptions_Order' ) || class_exists( 'WC_Pre_Orders_Order' ) )
       include_once( 'include/class-woocommerce-paycertify-subscription.php' );
 
+    // Gateway
+    $this->gateway = new WC_Paycertify_Gateway();
 
     // Call configure 3DS method
     $this->configure_three_ds();
@@ -149,14 +153,18 @@ if( !function_exists('writeLog') ) {
 }
 
 if( !function_exists('pc_overridePageTemplate') ) {
-  add_filter( 'page_template', 'pc_overridePageTemplate' );
+  add_action( 'template_redirect', 'pc_overridePageTemplate' );
 
   function pc_overridePageTemplate( $page_template )
   {
-      if ( is_page( '3ds-callback' ) ) {
-          $page_template = dirname( __FILE__ ) . '/actions/3ds_callback.php';
+      global $wp_query;
+      $page = $wp_query->query['pagename'];
+
+      if ($page == 'paycertify/callback') {
+        require_once(dirname( __FILE__ ) . '/actions/3ds_callback.php');
+      } else {
+        return;
       }
-      return $page_template;
   }
 }
 
