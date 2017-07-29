@@ -1,12 +1,14 @@
 <?php 
 global $woocommerce;
 
-$threeDSCallback = new WCPaycertifyThreeDSCallback();
-$result = json_decode($threeDSCallback->execute(), JSON_UNESCAPED_SLASHES);
+if(isset($_SESSION['3ds'])) {
+	$threeDSCallback = new WCPaycertifyThreeDSCallback();
+	$result = json_decode($threeDSCallback->execute(), JSON_UNESCAPED_SLASHES);
 
-$gateway = new WC_Paycertify_Gateway();
+	$gateway = new WC_Paycertify_Gateway();
 
-$payment = $gateway->finishPayment($_SESSION['3ds']['order_id'], $result);
+	$payment = $gateway->finishPayment($_SESSION['3ds']['order_id'], $result);
+}
 
 function pc_redirectTo($location) {
 	$redirect = "<script>" .

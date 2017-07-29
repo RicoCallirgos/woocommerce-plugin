@@ -97,7 +97,7 @@ class Form {
               var frame = document.getElementById('frame');
               var form = document.getElementById('callback-form');
               var interval = 500;
-              var timeout = interval * 20;
+              var timeout = interval * 60;
               var formSubmited = false;
 
               frame.contentDocument.write('${form}');
@@ -125,7 +125,7 @@ class Form {
                   };
 
                   clearInterval(interval);
-                  form.submit();  
+                  form.submit();
                 } catch(e) {
                   return false;
                 };

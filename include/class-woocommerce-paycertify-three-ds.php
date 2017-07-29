@@ -70,7 +70,6 @@ class WC_Paycertify_ThreeDS {
 
         // Mark as on-hold (we're awaiting the payment)
         $order->update_status( '3ds-declined', __( 'Declined 3D Secure Card.', 'paycertify' ) );
-        die('1');
         return wc_add_notice( __('Payment Error : ', 'paycertify') . 'Something went wrong while securing this transaction.' , 'error' );
       } else {
         // All good, render the view
@@ -83,10 +82,8 @@ class WC_Paycertify_ThreeDS {
         if ($this->gateway->get_option('3ds_decline_transactions') == 'yes') {
           // Mark as on-hold (we're awaiting the payment)
           $order->update_status( '3ds-declined', __( 'Declined 3D Secure Card.', 'paycertify' ) );
-        die('3');
           return wc_add_notice( __('Payment Error : ', 'paycertify') . 'Your card is not enrolled to 3D Secure. Please get in touch with our support.' , 'error' );
         } else {
-        die('4');
           return $this->gateway->finishPayment($_SESSION['3ds']['order_id'], $result);
         }
     }

@@ -158,9 +158,8 @@ if( !function_exists('pc_overridePageTemplate') ) {
   function pc_overridePageTemplate( $page_template )
   {
       global $wp_query;
-      $page = $wp_query->query['pagename'];
 
-      if ($page == 'paycertify/callback') {
+      if ($wp_query->query['pagename'] == 'paycertify/callback' || ($wp_query->query['category_name'] == "paycertify" && $wp_query->query['name'] == "callback")) {
         require_once(dirname( __FILE__ ) . '/actions/3ds_callback.php');
       } else {
         return;
