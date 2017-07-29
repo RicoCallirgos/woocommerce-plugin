@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /*
 * @class 	Paycertify_API
 * @auther 	Percertify
-* @version  0.1.2
+* @version  0.1.3
 */
 class Paycertify_API {
 
