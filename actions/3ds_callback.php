@@ -3,6 +3,7 @@ global $woocommerce;
 
 if(isset($_SESSION['3ds'])) {
 	$threeDSCallback = new WCPaycertifyThreeDSCallback();
+
 	$result = json_decode($threeDSCallback->execute(), JSON_UNESCAPED_SLASHES);
 
 	$gateway = new WC_Paycertify_Gateway();
@@ -15,7 +16,6 @@ function pc_redirectTo($location) {
 		"window.top.location.href = '" . $location . "';" .
 		"</script>";
 	echo $redirect;
-	die();
 }
 
 if ($payment['redirect'] !== null) {

@@ -156,6 +156,22 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
         'default'     => 'yes',
         'desc_tip'    => true
       ),
+      '3ds_frictionless' => array(
+        'title'     => __( 'Use Frictionless Mode?', 'paycertify' ),
+        'type'        => 'checkbox',
+        'label'       => __( 'Enable this option to use 3DS in background, without a user input.', 'paycertify' ),
+        'description' => __( 'Enable this option to use 3DS in background, without a user input.', 'paycertify' ),
+        'default'     => 'yes',
+        'desc_tip'    => true
+      ),
+      '3ds_fallback_regular' => array(
+        'title'     => __( 'Fallback to Regular Mode?', 'paycertify' ),
+        'type'        => 'checkbox',
+        'label'       => __( 'If Frictionless mode fails, check it to fallback to regular mode.', 'paycertify' ),
+        'description' => __( 'It only works when using Frictionless mode.', 'paycertify' ),
+        'default'     => 'no',
+        'desc_tip'    => true
+      ),
     );
 
   }
@@ -201,6 +217,9 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
   public function payment_fields(){
     $html = '';
     if($this -> description) echo wpautop(wptexturize($this -> description));
+    $html.="<div class=\"threeds_loading\"><div class=\"message\"><p>Securing your purchase. <br /><small>It may take a few seconds.</small></p></div></div>";
+    $html.='<input type="hidden" name="3ds_type" id="3ds_type" value="' . $this->threeDSType() . '">';   
+    $html.='<input type="hidden" name="3ds_fallback" id="3ds_fallback" value="' . $this->isThreeDSFallbackEnabled() . '">';   
     $html.= '<table>';
       $html.= '<tbody>';
         $html.= '<tr>';
@@ -337,9 +356,20 @@ class WC_Paycertify_Gateway extends WC_Payment_Gateway {
 
   }
 
-  public function is_three_ds_enabled(){
+  public function is_three_ds_enabled() {
     return ($this->get_option('enable_3ds') == 'yes' && strlen($this->get_option('3ds_api_key')) > 0 && strlen($this->get_option('3ds_api_secret')) > 0);
   }
 
+  public function threeDSType(){
+    if ($this->get_option('3ds_frictionless') == 'yes'){
+      return 'frictionless';
+    } else {
+      return 'strict';
+    }
+  }
+
+  public function isThreeDSFallbackEnabled() {
+    return ($this->get_option('3ds_fallback_regular') == 'yes') ? "1" : "0";
+  }
 
 } // end \WC_Paycertify_Gateway

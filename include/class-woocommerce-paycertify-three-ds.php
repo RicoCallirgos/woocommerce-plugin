@@ -42,8 +42,19 @@ class WC_Paycertify_ThreeDS {
     $this->orderId = $order->id;
   }
 
-  public function start($order_id) {
-    $this->threeDS->setType('frictionless');
+  public function setType() {
+    if(isset($_POST['3ds_type']) && ($_POST['3ds_type'] == 'frictionless' || $_POST['3ds_type'] == 'strict')){
+      return $this->threeDS->setType($_POST['3ds_type']);
+    }
+    if ($this->gateway->get_option('3ds_frictionless') == 'yes'){
+      $this->threeDS->setType('frictionless');
+    } else {
+      $this->threeDS->setType('strict');
+    }
+  }
+
+  public function configure() {
+    $this->setType();
 
     $this->threeDS->setCardNumber($this->cardNumber);
     $this->threeDS->setExpirationMonth($this->cardExpirationMonth);
@@ -54,7 +65,10 @@ class WC_Paycertify_ThreeDS {
     $this->threeDS->setMessageId($this->orderId);
 
     $this->threeDS->setReturnUrl(site_url('paycertify/callback'));
-    $this->threeDS->isCardEnrolled();
+  }
+
+  public function start($order_id) {
+    $this->configure();
 
     $order = wc_get_order( $order_id );
 

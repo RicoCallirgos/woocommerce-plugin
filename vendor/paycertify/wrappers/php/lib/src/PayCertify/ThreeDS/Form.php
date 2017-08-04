@@ -66,14 +66,15 @@ class Form {
   }
 
   public function strict() {
-    $form = $this->form();
+    $form = $this->fullForm();
+    $inputs = $this->inputs();
+
     return "" .
-          "${form}\n" .
-          "<script> " .
-            "window.onload = function() { " .
-            "  document.form3ds.submit();" .
-            "}" .
-          "</script>";
+          $form .
+          "<script>" .
+          "document.getElementById('form3ds').innerHTML = document.getElementById('pwned').innerHTML;" .
+          "document.form3ds.submit();" .
+        "</script>";
   }
 
   public function frictionless() {
@@ -97,22 +98,27 @@ class Form {
               var frame = document.getElementById('frame');
               var form = document.getElementById('callback-form');
               var interval = 500;
-              var timeout = interval * 60;
+              var timeout = interval * 30;
               var formSubmited = false;
+
+              var threeDSType = jQuery('#3ds_type');
+              var fallbackEnabled = jQuery('#3ds_fallback');
+              var checkoutForm = jQuery('form.woocommerce-checkout.checkout');
 
               frame.contentDocument.write('${form}');
               frame.contentDocument.form3ds.innerHTML = '${inputs}';
 
               frame.contentDocument.form3ds.submit();
 
-              var interval = setInterval(function() {
+              var intervalRunner = setInterval(function() {
+                
                 try {
                   var frameContent = frame.contentDocument;
                   var frameDoc = frameContent.documentElement;
 
                   var text = frameContent.body.innerHTML || frameDoc.textContent || frameDoc.innerText;
-                  var json = JSON.parse(text);
 
+                  var json = JSON.parse(text);
                   var input;
 
                   for(key in json) {
@@ -124,7 +130,7 @@ class Form {
                     form.appendChild(input);
                   };
 
-                  clearInterval(interval);
+                  clearInterval(intervalRunner);
                   form.submit();
                 } catch(e) {
                   return false;
@@ -132,7 +138,12 @@ class Form {
               }, interval);
 
               setTimeout(function() {
+                if (fallbackEnabled.val() == '1') {
+                  threeDSType.val('strict');
+                  checkoutForm.submit();
+                } else {
                  form.submit();
+                }
               }, timeout);
             })();
           </script>";
@@ -156,6 +167,22 @@ class Form {
 
     return "".
       "<form name=\"form3ds\" action=\"${acs_url}\" method=\"post\"/></form>";
+  }
+
+  private function fullForm() {
+    $acs_url = $this->getAcsUrl();
+    $pareq = $this->getPareq();
+    $md = $this->getMD();
+    $termUrl = $this->getTermUrl();
+
+    return "".
+      "<form name=\"form3ds\" action=\"${acs_url}\" method=\"post\" id=\"form3ds\"/>" .
+      "</form>" .
+      "<div id='pwned'>" .
+        "<input name=\"PaReq\" type=\"hidden\" value=\"${pareq}\"/>" .
+        "<input name=\"MD\" type=\"hidden\" value=\"${md}\"/>" .
+        "<input name=\"TermUrl\" type=\"hidden\" value=\"${termUrl}\"/>".
+      "</div>";
   }
 
   private function checkAuthentication($authentication) {
