@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
   * Plugin Name: PayCertify Gateway
   * Plugin URI:  https://paycertify.com/
   * Description: Paycertify Payment Gateway Plugin for WooCommerce.
-  * Version: 	 0.1.3
+  * Version: 	 0.2.0
   * Author: 	 PayCertify
   * Author URI:  https://paycertify.com/
   * License: 	 GPLv2
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
   * Text Domain: paycertify
   *
   * @class       WC_Paycertify
-  * @version     0.1.3
+  * @version     0.2.0
   * @package     WooCommerce/Classes/Payment
   * @author      Paycertify
   */
