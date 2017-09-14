@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 * @class 	WC_Paycertify_Gateway
 * @extends  WC_Payment_Gateway
 * @auther 	Percertify
-* @version  0.2.0
+* @version  0.2.1
 */
 
 class WC_Paycertify_Gateway extends WC_Payment_Gateway {

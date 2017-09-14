@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 * @class 	WC_Paycertify_ThreeDS
 * @extends  WC_Payment_ThreeDS
 * @auther 	Percertify
-* @version  0.2.0
+* @version  0.2.1
 */
 
 class WC_Paycertify_ThreeDS {

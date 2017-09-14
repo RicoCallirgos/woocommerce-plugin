@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
   * Plugin Name: PayCertify Gateway
   * Plugin URI:  https://paycertify.com/
   * Description: Paycertify Payment Gateway Plugin for WooCommerce.
-  * Version: 	 0.2.0
+  * Version: 	 0.2.1
   * Author: 	 PayCertify
   * Author URI:  https://paycertify.com/
   * License: 	 GPLv2
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
   * Text Domain: paycertify
   *
   * @class       WC_Paycertify
-  * @version     0.2.0
+  * @version     0.2.1
   * @package     WooCommerce/Classes/Payment
   * @author      Paycertify
   */
@@ -157,13 +157,15 @@ if( !function_exists('pc_overridePageTemplate') ) {
 
   function pc_overridePageTemplate( $page_template )
   {
-      global $wp_query;
+    global $wp;
 
-      if ($wp_query->query['pagename'] == 'paycertify/callback' || ($wp_query->query['category_name'] == "paycertify" && $wp_query->query['name'] == "callback")) {
-        require_once(dirname( __FILE__ ) . '/actions/3ds_callback.php');
-      } else {
-        return;
-      }
+    $current_url = home_url(add_query_arg(array(),$wp->request));
+
+    if (preg_match("/paycertify\/callback/", $current_url)) {
+      require_once(dirname( __FILE__ ) . '/actions/3ds_callback.php');
+    } else {
+      return;
+    }
   }
 }
 
