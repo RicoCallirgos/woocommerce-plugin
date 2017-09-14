@@ -6,7 +6,7 @@ if ( !defined( 'ABSPATH' ) ) {
 /**
  * @class 	Wc_Paycertify_Gateway_Subscription
  * @auther 	Percertify
- * @version 0.2.0
+ * @version 0.2.1
  */
 class Wc_Paycertify_Gateway_Subscription extends WC_Paycertify_Gateway {
 
