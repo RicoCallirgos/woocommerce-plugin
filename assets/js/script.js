@@ -1,5 +1,7 @@
 jQuery(document).ajaxComplete(function(event,response,xhr){
     jQuery('.threeds_loading').hide();
+    $('#place_order').prop('disabled', false);
+
   try {
       jQuery('#paycertify_3ds_iframe').remove();
     jQuery.parseJSON( response.responseText );
@@ -9,6 +11,7 @@ jQuery(document).ajaxComplete(function(event,response,xhr){
     jQuery('.woocommerce-error').remove();
     jQuery('div.payment_method_paycertify').append(div);
 
+    $('#place_order').prop('disabled', true);
     jQuery('.threeds_loading').show();
   }
 });
